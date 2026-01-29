@@ -43,8 +43,10 @@
         popupAnchor: [0, -16]
       });
 
+      const hydrantFile = "Lexington-Hydrants.geojson";
+
       // 3) Load GeoJSON and add to map
-      fetch("hydrants.geojson")
+      fetch(hydrantFile)
         .then(r => r.json())
         .then(data => {
           const layer = L.geoJSON(data, {
@@ -72,7 +74,7 @@
         })
         .catch(err => {
           console.error(err);
-          alert("Failed to load hydrants.geojson. Check file name/path.");
+          alert(`Failed to load ${hydrantFile}. Check file name/path.`);
         });
     </script>
   </body>
