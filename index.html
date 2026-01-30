@@ -24,13 +24,76 @@
   </head>
 
   <body>
+    <div id="searchBox" style="
+      position: absolute; top: 10px; left: 50px; z-index: 2000;
+      background: white; padding: 8px; border-radius: 6px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.25); font-family: system-ui, sans-serif;">
+      <input id="addr" type="text" placeholder="Search address (Lexington, MA)…" style="width: 280px; padding: 6px;" />
+      <button id="go" style="padding: 6px 10px;">Go</button>
+    </div>
+
     <div id="map"></div>
 
     <script>
       // 1) Map + basemap
       const map = L.map("map").setView([42.447, -71.225], 13);
 
-      // L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+
+      let searchMarker = null;
+
+      async function geocode(query) {
+        const q = query.includes("Lexington") ? query : `${query}, Lexington, MA`;
+        const url = new URL("https://nominatim.openstreetmap.org/search");
+        url.searchParams.set("format", "json");
+        url.searchParams.set("limit", "1");
+        url.searchParams.set("q", q);
+
+        const resp = await fetch(url.toString(), {
+          headers: {
+            // Nominatim requests that apps identify themselves; include a contact.
+            // This is not a secret; it's for abuse/contact purposes.
+            "Accept": "application/json"
+          }
+        });
+
+        if (!resp.ok) throw new Error(`Geocode failed: HTTP ${resp.status}`);
+        const results = await resp.json();
+        return results[0] || null;
+      }
+
+      async function runSearch() {
+        const input = document.getElementById("addr").value.trim();
+        if (!input) return;
+
+        try {
+          const hit = await geocode(input);
+          if (!hit) {
+            alert("No results.");
+            return;
+          }
+
+          const lat = parseFloat(hit.lat);
+          const lon = parseFloat(hit.lon);
+
+          if (searchMarker) map.removeLayer(searchMarker);
+          searchMarker = L.marker([lat, lon]).addTo(map)
+            .bindPopup(hit.display_name)
+            .openPopup();
+
+          map.setView([lat, lon], 17);
+        } catch (e) {
+          console.error(e);
+          alert("Search failed. Try again.");
+        }
+      }
+
+      document.getElementById("go").addEventListener("click", runSearch);
+      document.getElementById("addr").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") runSearch();
+      });
+
+
+        // L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       // maxZoom: 19,
       // attribution: '&copy; OpenStreetMap contributors'
       // }).addTo(map);
@@ -61,9 +124,9 @@
       // 2) Custom hydrant icon
       const hydrantIcon = L.icon({
         iconUrl: "fire_hydrant_64x64.png",
-        iconSize: [48, 48],
-        iconAnchor: [24, 24],
-        popupAnchor: [0, -24]
+        iconSize: [64, 64],
+        iconAnchor: [32, 32],
+        popupAnchor: [0, -32]
       });
 
       const hydrantFile = "Lexington-Hydrants.geojson";
