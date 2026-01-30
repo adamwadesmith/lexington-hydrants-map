@@ -30,17 +30,40 @@
       // 1) Map + basemap
       const map = L.map("map").setView([42.447, -71.225], 13);
 
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
+      // L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      // maxZoom: 19,
+      // attribution: '&copy; OpenStreetMap contributors'
+      // }).addTo(map);
+
+      // Satellite imagery
+      const imagery = L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, attribution: "Tiles © Esri" }
+      ).addTo(map);
+
+      // Put overlays in their own pane above imagery
+      map.createPane("labels");
+      map.getPane("labels").style.zIndex = 650;
+      map.getPane("labels").style.pointerEvents = "none";
+
+      // Roads (vector-ish raster overlay)
+      const roads = L.tileLayer(
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, pane: "labels", attribution: "Tiles © Esri" }
+      ).addTo(map);
+
+      // Labels (street/place labels overlay)
+      const labels = L.tileLayer(
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, pane: "labels", attribution: "Tiles © Esri" }
+      ).addTo(map);
 
       // 2) Custom hydrant icon
       const hydrantIcon = L.icon({
         iconUrl: "fire_hydrant_64x64.png",
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-        popupAnchor: [0, -16]
+        iconSize: [48, 48],
+        iconAnchor: [24, 24],
+        popupAnchor: [0, -24]
       });
 
       const hydrantFile = "Lexington-Hydrants.geojson";
